@@ -72,19 +72,7 @@ The platform supports role-based usage so that different stakeholders can collab
 3. Color coded chart to indicate positive/negative NAV change.
 4. Download historical NAV data in CSV format.
 
-## Suggested Future Enhancements
-1. Investor onboarding questionnaire for risk profiling.
-2. Fund comparison table with weighted scoring.
-3. Advisor panel for educational posts and recommendations.
-4. Admin panel for user and content management.
-5. Analyst reports dashboard with exportable insights.
-6. Watchlist, SIP planning, and goal-tracking modules.
 
-## Want to run it locally?
-1. Clone the repository.
-2. Run `npm install` to install the dependencies.
-3. Get API URL from [MFAPI.in](https://www.mfapi.in/) and set it as the value of `VITE_MFAPI_URL` in the `.env` file.
-4. Run `npm run dev` to start the development server.
 
 ## Site link
 ## https://mutual-fundapp.netlify.app/
