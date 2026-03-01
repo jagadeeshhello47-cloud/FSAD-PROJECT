@@ -87,4 +87,4 @@ The platform supports role-based usage so that different stakeholders can collab
 4. Run `npm run dev` to start the development server.
 
 ## Site link
-## https://indiamf.pages.dev/
+## https://mutual-fundapp.netlify.app/
