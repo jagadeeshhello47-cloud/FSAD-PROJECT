@@ -50,7 +50,7 @@ const Home = () => {
                   lineHeight: 1.2
                 }}
               >
-                Investment Intelligence Platform
+                Investment Perception and Selection Behavior Towards Mutual Funds
               </Typography>
               <Typography
                 variant="h5"
