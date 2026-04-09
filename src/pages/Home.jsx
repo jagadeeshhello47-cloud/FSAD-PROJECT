@@ -65,64 +65,28 @@ const Home = () => {
             </Box>
 
             {/* Hero Image Gallery */}
-            <Grid container spacing={2} sx={{ my: 2, maxWidth: 900, justifyContent: 'center' }}>
-              <Grid item xs={12} sm={6} md={4}>
-                <Box
-                  sx={{
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    aspectRatio: '1',
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '4rem',
-                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': { transform: 'scale(1.05)', boxShadow: '0 25px 70px rgba(0, 0, 0, 0.4)' }
-                  }}
-                >
-                  📊
-                </Box>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Box
-                  sx={{
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    aspectRatio: '1',
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '4rem',
-                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': { transform: 'scale(1.05)', boxShadow: '0 25px 70px rgba(0, 0, 0, 0.4)' }
-                  }}
-                >
-                  💹
-                </Box>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Box
-                  sx={{
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    aspectRatio: '1',
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '4rem',
-                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': { transform: 'scale(1.05)', boxShadow: '0 25px 70px rgba(0, 0, 0, 0.4)' }
-                  }}
-                >
-                  🎯
-                </Box>
-              </Grid>
+            <Grid container spacing={3} sx={{ my: 2, maxWidth: 900, justifyContent: 'center' }}>
+              {[
+                {
+                  title: 'Admin Workspace',
+                  src: 'https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&w=800&q=80',
+                  alt: 'admin dashboard'
+                },
+                {
+                  title: 'Investor Insights',
+                  src: 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=800&q=80',
+                  alt: 'investor analytics'
+                }
+              ].map((item, idx) => (
+                <Grid item xs={12} sm={6} md={5} key={idx}>
+                  <Box className="gallery-image">
+                    <img src={item.src} alt={item.alt} />
+                  </Box>
+                  <Typography variant="subtitle1" sx={{ mt: 2, color: 'white', fontWeight: 600, textAlign: 'center' }}>
+                    {item.title}
+                  </Typography>
+                </Grid>
+              ))}
             </Grid>
 
             {/* Role Badges */}
