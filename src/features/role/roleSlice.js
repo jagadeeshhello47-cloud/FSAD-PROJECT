@@ -1,4 +1,5 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
 export const roleRouteMap = {
   Admin: '/admin',
@@ -12,7 +13,54 @@ const initialState = {
   userName: '',
   currentRole: 'Investor',
   users: [],
+  status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  error: null,
 };
+
+// API base URL - update this to match your backend URL
+const API_BASE_URL = 'http://localhost:8080/api';
+
+// Async thunks for backend API
+export const loginUser = createAsyncThunk(
+  'role/loginUser',
+  async ({ userName, password }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+        userName,
+        password,
+      });
+      
+      if (response.data.success) {
+        return response.data.user;
+      } else {
+        return rejectWithValue(response.data.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Login failed');
+    }
+  }
+);
+
+export const registerUserAsync = createAsyncThunk(
+  'role/registerUser',
+  async ({ userName, password, role }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, {
+        userName,
+        password,
+        role,
+      });
+      
+      if (response.data.success) {
+        return response.data.user;
+      } else {
+        return rejectWithValue(response.data.message);
+      }
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Registration failed');
+    }
+  }
+);
 
 const roleSlice = createSlice({
   name: 'role',
@@ -59,6 +107,42 @@ const roleSlice = createSlice({
       ...state,
       ...action.payload,
     }),
+    clearError: (state) => {
+      state.error = null;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      // Login user
+      .addCase(loginUser.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.isAuthenticated = true;
+        state.userName = action.payload.userName;
+        state.currentRole = action.payload.role;
+        state.error = null;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      })
+      // Register user
+      .addCase(registerUserAsync.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(registerUserAsync.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.users.push(action.payload);
+        state.error = null;
+      })
+      .addCase(registerUserAsync.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      });
   },
 });
 
@@ -72,6 +156,10 @@ export const getRegisteredUsers = (store) => store.role.users;
 
 export const getRoleHomePath = (store) => roleRouteMap[store.role.currentRole] || '/investor';
 
+export const getRoleStatus = (store) => store.role.status;
+
+export const getRoleError = (store) => store.role.error;
+
 export const {
   loginWithRole,
   registerUser,
@@ -79,6 +167,7 @@ export const {
   logout,
   setCurrentRole,
   hydrateRoleState,
+  clearError,
 } = roleSlice.actions;
 
 export default roleSlice.reducer;

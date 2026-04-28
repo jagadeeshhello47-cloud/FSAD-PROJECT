@@ -18,10 +18,15 @@ import {
   getCurrentRole,
   getIsAuthenticated,
   getRegisteredUsers,
+  getRoleStatus,
+  getRoleError,
   loginWithCredentials,
   loginWithRole,
+  loginUser,
   registerUser,
+  registerUserAsync,
   roleRouteMap,
+  clearError,
 } from '../features/role/roleSlice';
 
 const roles = ['Admin', 'Investor', 'Financial Advisor', 'Data Analyst'];
@@ -35,11 +40,13 @@ const Login = () => {
   const isAuthenticated = useSelector(getIsAuthenticated);
   const currentRole = useSelector(getCurrentRole);
   const registeredUsers = useSelector(getRegisteredUsers);
+  const status = useSelector(getRoleStatus);
+  const error = useSelector(getRoleError);
 
   const [userName, setUserName] = useState('');
   const [role, setRole] = useState('Investor');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [localError, setLocalError] = useState('');
 
   const mode = searchParams.get('mode') === 'signup' ? 'signup' : 'signin';
   const fromPath = useMemo(() => location.state?.from?.pathname, [location.state]);
@@ -56,59 +63,97 @@ const Login = () => {
     }
   }, [registeredUsers.length, mode, setSearchParams]);
 
+  // Handle backend API errors
+  useEffect(() => {
+    if (error) {
+      setLocalError(error);
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
+
   const switchMode = (nextMode) => {
-    setError('');
+    setLocalError('');
     setSearchParams({ mode: nextMode }, { replace: true });
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!userName.trim()) {
-      setError('Enter user name.');
+      setLocalError('Enter user name.');
       return;
     }
 
     if (!password.trim()) {
-      setError('Enter password.');
+      setLocalError('Enter password.');
       return;
     }
 
     if (mode === 'signup') {
-      const alreadyExists = registeredUsers.some(
-        (user) => user.userName.toLowerCase() === userName.trim().toLowerCase()
-      );
+      // Try to register with backend API first
+      try {
+        await dispatch(registerUserAsync({ 
+          userName: userName.trim(), 
+          password: password.trim(), 
+          role 
+        })).unwrap();
+        
+        // After successful registration, try to login
+        await dispatch(loginUser({ 
+          userName: userName.trim(), 
+          password: password.trim() 
+        })).unwrap();
+        
+        navigate(roleRouteMap[role], { replace: true });
+      } catch (err) {
+        // If backend fails, fall back to local storage
+        const alreadyExists = registeredUsers.some(
+          (user) => user.userName.toLowerCase() === userName.trim().toLowerCase()
+        );
 
-      if (alreadyExists) {
-        setError('User already exists. Please sign in.');
+        if (alreadyExists) {
+          setLocalError('User already exists. Please sign in.');
+          return;
+        }
+
+        dispatch(registerUser({ userName: userName.trim(), password: password.trim(), role }));
+        dispatch(loginWithRole({ userName: userName.trim(), role }));
+        navigate(roleRouteMap[role], { replace: true });
+      }
+      return;
+    }
+
+    // Login mode - try backend API first
+    try {
+      await dispatch(loginUser({ 
+        userName: userName.trim(), 
+        password: password.trim() 
+      })).unwrap();
+      
+      setLocalError('');
+      navigate(fromPath && fromPath !== '/login' ? fromPath : roleRouteMap[currentRole] || '/investor', { replace: true });
+    } catch (err) {
+      // Fall back to local storage if backend fails
+      if (registeredUsers.length === 0) {
+        setLocalError('No users found. Please sign up first.');
+        switchMode('signup');
         return;
       }
 
-      dispatch(registerUser({ userName: userName.trim(), password: password.trim(), role }));
-      dispatch(loginWithRole({ userName: userName.trim(), role }));
-      navigate(roleRouteMap[role], { replace: true });
-      return;
+      const validUser = registeredUsers.find(
+        (user) => user.userName.toLowerCase() === userName.trim().toLowerCase() && user.password === password.trim()
+      );
+
+      if (!validUser) {
+        setLocalError('Invalid credentials.');
+        return;
+      }
+
+      dispatch(loginWithCredentials({ userName: userName.trim(), password: password.trim() }));
+      setLocalError('');
+
+      navigate(fromPath && fromPath !== '/login' ? fromPath : roleRouteMap[validUser.role], { replace: true });
     }
-
-    if (registeredUsers.length === 0) {
-      setError('No users found. Please sign up first.');
-      switchMode('signup');
-      return;
-    }
-
-    const validUser = registeredUsers.find(
-      (user) => user.userName.toLowerCase() === userName.trim().toLowerCase() && user.password === password.trim()
-    );
-
-    if (!validUser) {
-      setError('Invalid credentials.');
-      return;
-    }
-
-    dispatch(loginWithCredentials({ userName: userName.trim(), password: password.trim() }));
-    setError('');
-
-    navigate(fromPath && fromPath !== '/login' ? fromPath : roleRouteMap[validUser.role], { replace: true });
   };
 
   return (
@@ -154,7 +199,7 @@ const Login = () => {
               size="small"
             />
 
-            {error && <Alert severity="error">{error}</Alert>}
+            {(localError || error) && <Alert severity="error">{localError || error}</Alert>}
 
             <Button type="submit" variant="contained">
               {mode === 'signup' ? 'Sign Up' : 'Sign In'}
